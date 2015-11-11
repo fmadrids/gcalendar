@@ -2,7 +2,7 @@ from __future__ import print_function
 import httplib2
 
 import os
-from subprocess import check_call
+from subprocess import call
 import datetime
 import re
 
@@ -99,9 +99,7 @@ def get_credentials():
     Returns:
         Credentials, the obtained credential.
     """
-    #home_dir = os.path.expanduser('~')
-    # TODO: Change homedir
-    home_dir = '/home/francisco/Temp'
+    home_dir = os.path.expanduser('~')
     credential_dir = os.path.join(home_dir, '.credentials')
     if not os.path.exists(credential_dir):
         os.makedirs(credential_dir)
@@ -131,15 +129,13 @@ def process_server(server):
     email_text = 'Processing server \"%s\": it is going to be reinstalled!!' % ipminame
     send_gmail(email_text)
     # Configure PXE
-    #retcode = check_call(["ipmitool", "-I lanplus", "-A password", "-H" + ipmiip, "-U" + ipmiusername, "-P " + ipmipassword, "chassis power status"])
-    retcode = check_call(["ls", "-l"])
+    retcode = call(['/usr/bin/ipmitool', '-I', 'lanplus', '-A', 'password', '-H', ipmiip, '-U', ipmiusername, '-P' , ipmipassword, 'chassis', 'bootdev', 'pxe'])
     if retcode != 0:
         email_text = 'Error when configuring PXE on server \"%s\"!!' % ipminame
         send_gmail(email_text)
         return
     # Reboot server
-    #retcode = check_call(["ipmitool", "-I lanplus", "-A password", "-H" + ipmiip, "-U" + ipmiusername, "-P " + ipmipassword, "chassis power status"])
-    retcode = check_call(["ls", "-l"])
+    retcode = call(['/usr/bin/ipmitool', '-I', 'lanplus', '-A', 'password', '-H', ipmiip, '-U', ipmiusername, '-P' , ipmipassword, 'chassis', 'power', 'reset'])
     if retcode != 0:
         email_text = 'Error when resetting server \"%s\"!!' % ipminame
         send_gmail(email_text)
@@ -147,8 +143,6 @@ def process_server(server):
 
 
 def process_event(event, server_list):
-    print(event['summary'])
-
     event_servers = str(event['description']).lower().split(':')
 
     # Iterate over the servers
@@ -169,7 +163,6 @@ def main():
 
     ahora = datetime.datetime.utcnow()  # Para poder restar fechas luego
     now = ahora.isoformat() + 'Z' # 'Z' indicates UTC time
-    print('Getting the upcoming ' + str(NUMEVENTS) + ' events')
     eventsResult = service.events().list(
         calendarId=CALENDAR_ID, timeMin=now, maxResults=NUMEVENTS, singleEvents=True,
         orderBy='startTime').execute()
@@ -193,7 +186,7 @@ def main():
         if tdelta < datetime.timedelta(days=1) and ahora < fecha:
             process_event(event, server_list)
         elif tdelta < datetime.timedelta(days=NOTIFICATION_DAYS) and ahora < fecha:
-            msg = 'Please prepare installation of event %s: %s\n\nEvent date: %s' % (event['summary'], event['description'], start)
+            msg = 'Please prepare installation of event \"%s\": %s\n\nEvent date: %s' % (event['summary'], event['description'], start)
             send_gmail(msg)
 
 if __name__ == '__main__':
