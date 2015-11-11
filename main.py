@@ -30,6 +30,7 @@ NOTIFICATION_DAYS = 0
 
 CLIENT_SECRET_FILE = ''
 CREDENTIALS_FILE = ''
+CALENDAR_ID = ''
 SCOPES = 'https://www.googleapis.com/auth/calendar.readonly'
 APPLICATION_NAME = 'StratioCalendar'
 NUMEVENTS = 12
@@ -50,6 +51,7 @@ def read_config():
     global NOTIFICATION_DAYS
     global CLIENT_SECRET_FILE
     global CREDENTIALS_FILE
+    global CALENDAR_ID
     global DELTA_TIME
     global SERVER_FILE
 
@@ -62,6 +64,7 @@ def read_config():
     NOTIFICATION_DAYS = int(config["gcalendar"]["notificationdays"])
     CLIENT_SECRET_FILE = config["gcalendar"]["secretfile"]
     CREDENTIALS_FILE = config["gcalendar"]["credentialsfile"]
+    CALENDAR_ID = config["gcalendar"]["calendarid"]
     SERVER_FILE = config["serverfile"]
     f.close()
 
@@ -167,11 +170,8 @@ def main():
     ahora = datetime.datetime.utcnow()  # Para poder restar fechas luego
     now = ahora.isoformat() + 'Z' # 'Z' indicates UTC time
     print('Getting the upcoming ' + str(NUMEVENTS) + ' events')
-    #Capsaicina=stratio.com_s53c32gg3uh7k5g0553v4umsf8@group.calendar.google.com
-    #Cafeina=stratio.com_54jn8o867c362rsq397keqa42c@group.calendar.google.com
-    #Laboratorios=stratio.com_1pii46pt7kae10qa3hn0fiujho@group.calendar.google.com
     eventsResult = service.events().list(
-        calendarId='stratio.com_1pii46pt7kae10qa3hn0fiujho@group.calendar.google.com', timeMin=now, maxResults=NUMEVENTS, singleEvents=True,
+        calendarId=CALENDAR_ID, timeMin=now, maxResults=NUMEVENTS, singleEvents=True,
         orderBy='startTime').execute()
     events = eventsResult.get('items', [])
 
